@@ -1,0 +1,46 @@
+`timescale 1s/1ms
+module testbench;
+
+reg clk;
+reg reset;
+reg ldr_x;
+reg ldr_y;
+wire motor_x;
+wire motor_y;
+
+// Instantiate the solar tracker module
+solar_tracker dut (
+    .clk(clk),
+    .reset(reset),
+    .ldr_x(ldr_x),
+    .ldr_y(ldr_y),
+    .motor_x(motor_x),
+    .motor_y(motor_y)
+);
+
+// Clock generation
+always begin
+    #5 clk = ~clk;
+end
+
+// Reset generation
+initial begin
+    clk = 1'b0;
+    reset = 1'b1;
+    #10 reset = 1'b0;
+end
+
+// Simulate changing light conditions
+initial begin
+    ldr_x = 1'b0;  // Simulate no light on X-axis sensor
+    ldr_y = 1'b0;  // Simulate no light on Y-axis sensor
+    #100 ldr_x = 1'b1;  // Simulate light on X-axis sensor
+    #100 ldr_y = 1'b0;  // Simulate no light on Y-axis sensor
+    #100 ldr_x = 1'b0;  // Simulate no light on X-axis sensor
+    #100 ldr_y = 1'b1;  // Simulate light on Y-axis sensor
+    #100 ldr_x = 1'b1;  // Simulate light on X-axis sensor
+    #100 ldr_y = 1'b1;  // Simulate light on Y-axis sensor
+    #200 $finish;  // Finish simulation after 2 seconds
+end
+
+endmodule

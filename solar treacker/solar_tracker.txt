@@ -1,0 +1,52 @@
+`timescale 1s/1ms
+module solar_tracker(
+    input wire clk,           // Clock input
+    input wire reset,         // Reset input
+    input wire ldr_x,         // LDR sensor input for X-axis
+    input wire ldr_y,         // LDR sensor input for Y-axis
+    output reg motor_x,       // Motor control output for X-axis
+    output reg motor_y       // Motor control output for Y-axis
+);
+
+reg [3:0] count;  // Counter to track time
+reg [1:0] direction;  // Direction of sunlight (00 - no light, 01 - X-axis, 10 - Y-axis, 11 - both axes)
+
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        // Initialize motor control signals
+        motor_x <= 1'b0;
+        motor_y <= 1'b0;
+        count <= 4'b0000;  // Reset counter
+        direction <= 2'b00;  // Reset direction
+    end else begin
+        count <= count + 1;  // Increment counter every clock cycle
+
+        // Detect sunlight direction
+        if (ldr_x && !ldr_y)
+            direction <= 2'b01;  // Sunlight on X-axis
+        else if (!ldr_x && ldr_y)
+            direction <= 2'b10;  // Sunlight on Y-axis
+        else if (ldr_x && ldr_y)
+            direction <= 2'b11;  // Sunlight on both axes
+
+        // Change direction after 1 hour of continuous sunlight detection
+        if (direction != 2'b00 && count == 4'b1111) begin
+            count <= 4'b0000;  // Reset counter after 1 hour
+            // Control X-axis motor based on sunlight direction
+            if (direction == 2'b01 || direction == 2'b11)
+                motor_x <= 1'b1;
+            else
+                motor_x <= 1'b0;
+            // Control Y-axis motor based on sunlight direction
+            if (direction == 2'b10 || direction == 2'b11)
+                motor_y <= 1'b1;
+            else
+                motor_y <= 1'b0;
+        end else begin
+            motor_x <= 1'b0;  // Stop X-axis motor
+            motor_y <= 1'b0;  // Stop Y-axis motor
+        end
+    end
+end
+
+endmodule
